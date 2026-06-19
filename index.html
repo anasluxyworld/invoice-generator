@@ -176,6 +176,13 @@
   .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);}
   .legend-dot{width:9px;height:9px;border-radius:50%;}
 
+  /* Cloud status */
+  .cloud-status{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-dimmer);margin-top:3px;}
+  .cloud-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .cloud-dot.on{background:#10b981;}
+  .cloud-dot.off{background:#f59e0b;}
+  .cloud-dot.checking{background:var(--text-dimmer);}
+
   /* Toggle switch */
   .toggle{width:40px;height:23px;border-radius:999px;background:var(--border);border:none;cursor:pointer;position:relative;padding:0;flex-shrink:0;transition:background .15s;}
   .toggle.on{background:var(--accent);}
@@ -248,24 +255,56 @@
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo } = React;
 
-/* ---------------------------------- storage adapter ---------------------------------- */
-/* Uses window.storage when available (e.g. inside Claude artifacts); otherwise falls back
-   to localStorage so this file works as a normal standalone website. */
+/* ---------------------------------- cloud storage (Supabase) ---------------------------------- */
+/* All data is stored in a Supabase table called "app_storage" (key text primary key, value jsonb).
+   This makes the app's data identical across every device/browser. localStorage is only used as a
+   read fallback if the network/Supabase is unreachable, so the app still opens offline. */
+
+const SUPABASE_URL = 'https://gzyyqghcegqjufcmyyrd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_5xMIzNYeL3BhOa9NpgyHUQ_4YiQQdpP';
+const SUPABASE_TABLE = `${SUPABASE_URL}/rest/v1/app_storage`;
+const supabaseHeaders = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json'
+};
+
+let cloudOnline = null; // null = unknown yet, true/false once we know
+
 const storageAdapter = {
   async get(key) {
-    if (window.storage && typeof window.storage.get === 'function') {
-      try { return await window.storage.get(key, false); } catch (e) { return null; }
+    try {
+      const res = await fetch(`${SUPABASE_TABLE}?key=eq.${encodeURIComponent(key)}&select=value`, { headers: supabaseHeaders });
+      if (!res.ok) throw new Error('Supabase get failed: ' + res.status);
+      const rows = await res.json();
+      cloudOnline = true;
+      if (!rows.length) return null;
+      const value = JSON.stringify(rows[0].value);
+      localStorage.setItem(key, value); // keep an offline cache
+      return { value };
+    } catch (e) {
+      cloudOnline = false;
+      const v = localStorage.getItem(key);
+      return v !== null ? { value: v } : null;
     }
-    const v = localStorage.getItem(key);
-    return v !== null ? { value: v } : null;
   },
   async set(key, value) {
-    if (window.storage && typeof window.storage.set === 'function') {
-      try { return await window.storage.set(key, value, false); } catch (e) { return null; }
+    localStorage.setItem(key, value); // always cache locally first
+    try {
+      const res = await fetch(`${SUPABASE_TABLE}?on_conflict=key`, {
+        method: 'POST',
+        headers: { ...supabaseHeaders, Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify([{ key, value: JSON.parse(value), updated_at: new Date().toISOString() }])
+      });
+      if (!res.ok) throw new Error('Supabase set failed: ' + res.status);
+      cloudOnline = true;
+      return { value };
+    } catch (e) {
+      cloudOnline = false;
+      return { value };
     }
-    localStorage.setItem(key, value);
-    return { value };
-  }
+  },
+  getCloudStatus() { return cloudOnline; }
 };
 
 /* ---------------------------------- constants ---------------------------------- */
@@ -586,7 +625,9 @@ const NAV_ITEMS = [
   { id: 'settings', label: 'Settings', icon: 'settings' }
 ];
 
-function Sidebar({ view, setView, onNewInvoice, mobileOpen, setMobileOpen, toggleDark, dark }) {
+function Sidebar({ view, setView, onNewInvoice, mobileOpen, setMobileOpen, toggleDark, dark, cloudStatus }) {
+  const statusClass = cloudStatus === true ? 'on' : cloudStatus === false ? 'off' : 'checking';
+  const statusText = cloudStatus === true ? 'Cloud Synced' : cloudStatus === false ? 'Offline (saved locally)' : 'Checking...';
   return (
     <React.Fragment>
       <aside className="sidebar">
@@ -595,6 +636,7 @@ function Sidebar({ view, setView, onNewInvoice, mobileOpen, setMobileOpen, toggl
           <div>
             <div className="brand-name">ANAS LUXY WORLD</div>
             <div className="brand-tag">Vision Becomes Art</div>
+            <div className="cloud-status"><span className={cx('cloud-dot', statusClass)} />{statusText}</div>
           </div>
         </div>
         <div style={{ padding: '0 12px 12px' }}>
@@ -1414,6 +1456,12 @@ function App() {
   const [duplicateFrom, setDuplicateFrom] = useState(null);
   const [viewingId, setViewingId] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [cloudStatus, setCloudStatus] = useState(null);
+
+  useEffect(() => {
+    const t = setInterval(() => setCloudStatus(storageAdapter.getCloudStatus()), 2500);
+    return () => clearInterval(t);
+  }, []);
 
   const addToast = (message, type = 'success') => {
     const id = uid('t');
@@ -1494,7 +1542,7 @@ function App() {
       <Sidebar
         view={view} setView={(v) => { setView(v); setMobileOpen(false); }}
         onNewInvoice={goNewInvoice} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
-        toggleDark={() => setDark(d => !d)} dark={dark}
+        toggleDark={() => setDark(d => !d)} dark={dark} cloudStatus={cloudStatus}
       />
       <main className="content">
         {view === 'dashboard' && <Dashboard invoices={invoices} />}

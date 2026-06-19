@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ANAS LUXY WORLD — Invoice Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#f9fafb; --bg-card:#ffffff; --border:#e5e7eb; --text:#111827; --text-dim:#6b7280; --text-dimmer:#9ca3af;
+    --accent:#4f46e5; --accent-hover:#4338ca; --accent-light:#eef2ff;
+    --rose:#e11d48; --rose-light:#fff1f2; --rose-text:#e11d48;
+    --amber:#d97706; --amber-light:#fffbeb;
+    --emerald:#059669; --emerald-light:#ecfdf5;
+    --violet:#7c3aed; --violet-light:#f5f3ff;
+    --gray-badge:#6b7280; --gray-badge-light:#f3f4f6;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  html.dark{
+    --bg:#0f172a; --bg-card:#1e293b; --border:#334155; --text:#f1f5f9; --text-dim:#94a3b8; --text-dimmer:#64748b;
+    --accent:#6366f1; --accent-hover:#818cf8; --accent-light:rgba(99,102,241,0.18);
+    --rose-light:rgba(225,29,72,0.15);
+    --amber-light:rgba(217,119,6,0.15);
+    --emerald-light:rgba(5,150,105,0.15);
+    --violet-light:rgba(124,58,237,0.15);
+    --gray-badge-light:rgba(148,163,184,0.18);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;transition:background .15s;}
+  button,input,select,textarea{font-family:inherit;}
+  .app{min-height:100vh;display:flex;flex-direction:column;}
+  @media(min-width:900px){.app{flex-direction:row;}}
+
+  /* Sidebar */
+  .sidebar{display:none;}
+  @media(min-width:900px){
+    .sidebar{display:flex;flex-direction:column;width:240px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg-card);height:100vh;position:sticky;top:0;}
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:22px 18px;}
+  .brand-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+  .brand-name{font-weight:700;font-size:13px;line-height:1.2;}
+  .brand-tag{font-size:10.5px;color:var(--text-dimmer);line-height:1.2;}
+  .nav{flex:1;padding:0 12px;display:flex;flex-direction:column;gap:4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13.5px;font-weight:500;color:var(--text-dim);background:none;border:none;cursor:pointer;text-align:left;width:100%;}
+  .nav-item:hover{background:var(--bg);}
+  .nav-item.active{background:var(--accent-light);color:var(--accent);}
+  .side-bottom{padding:12px;}
+
+  /* Mobile top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-card);position:sticky;top:0;z-index:30;}
+  @media(min-width:900px){.topbar{display:none;}}
+  .topbar-left{display:flex;align-items:center;gap:8px;}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--text-dim);padding:8px;border-radius:8px;display:flex;align-items:center;}
+  .icon-btn:hover{background:var(--bg);}
+  .mobile-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:40;}
+  @media(min-width:900px){.mobile-drawer-overlay{display:none;}}
+  .mobile-drawer{position:absolute;right:0;top:0;height:100%;width:260px;background:var(--bg-card);padding:16px;box-shadow:-4px 0 20px rgba(0,0,0,0.2);}
+
+  main.content{flex:1;min-width:0;padding:18px;padding-bottom:60px;}
+  @media(min-width:640px){main.content{padding:24px;}}
+  @media(min-width:1024px){main.content{padding:32px;}}
+
+  h1.page-title{font-size:21px;font-weight:700;margin:0 0 4px;}
+  @media(min-width:640px){h1.page-title{font-size:24px;}}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:11px;padding:9px 16px;font-size:13.5px;font-weight:600;border:none;cursor:pointer;transition:transform .05s,opacity .15s;white-space:nowrap;}
+  .btn:active{transform:scale(0.96);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-secondary{background:var(--bg);color:var(--text);}
+  html.dark .btn-secondary{background:#334155;color:var(--text);}
+  .btn-secondary:hover{filter:brightness(0.96);}
+  .btn-danger{background:var(--rose-light);color:var(--rose-text);}
+  .btn-danger:hover{filter:brightness(0.95);}
+  .btn-ghost{background:none;color:var(--text-dim);}
+
+  /* Form atoms */
+  .label{display:block;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--text-dimmer);margin-bottom:6px;}
+  .input,.select,.textarea{width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:13.5px;outline:none;}
+  .input:focus,.select:focus,.textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light);}
+  .input:disabled{opacity:.65;}
+  .field{margin-bottom:0;}
+
+  /* Card */
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;}
+  .card-pad{padding:18px;}
+  @media(min-width:640px){.card-pad{padding:20px;}}
+
+  /* Badge */
+  .badge{display:inline-block;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .badge-draft{background:var(--gray-badge-light);color:var(--gray-badge);}
+  .badge-unpaid{background:var(--rose-light);color:var(--rose);}
+  .badge-partial{background:var(--amber-light);color:var(--amber);}
+  .badge-paid{background:var(--emerald-light);color:var(--emerald);}
+
+  /* Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50;}
+  .modal{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+  .modal.wide{max-width:680px;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg-card);}
+  .modal-title{font-weight:700;font-size:15px;margin:0;}
+  .modal-body{padding:20px;}
+
+  /* Toasts */
+  .toast-stack{position:fixed;bottom:16px;right:16px;z-index:100;display:flex;flex-direction:column;gap:8px;max-width:280px;}
+  .toast{padding:11px 16px;border-radius:12px;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.2);animation:fadein .2s ease;}
+  .toast.success{background:#059669;}
+  .toast.error{background:#dc2626;}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+  /* Stat cards */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(min-width:1024px){.stat-grid{grid-template-columns:repeat(4,1fr);gap:16px;}}
+  .stat-icon{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+  .stat-label{font-size:11.5px;font-weight:500;color:var(--text-dim);margin-bottom:4px;}
+  .stat-value{font-size:19px;font-weight:700;letter-spacing:-0.02em;}
+  @media(min-width:640px){.stat-value{font-size:22px;}}
+
+  /* Empty state */
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 16px;text-align:center;}
+  .empty-icon{padding:16px;border-radius:18px;background:var(--bg);color:var(--text-dimmer);margin-bottom:12px;}
+  .empty-title{font-weight:600;margin-bottom:4px;}
+  .empty-sub{font-size:13px;color:var(--text-dimmer);}
+
+  /* Grids */
+  .grid-2{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:640px){.grid-2{grid-template-columns:1fr 1fr;}}
+  .grid-3{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:640px){.grid-3{grid-template-columns:1fr 1fr;}}
+  @media(min-width:1024px){.grid-3{grid-template-columns:1fr 1fr 1fr;}}
+  .grid-form2{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:640px){.grid-form2{grid-template-columns:1fr 1fr;}}
+  .grid-form3{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:640px){.grid-form3{grid-template-columns:1fr 1fr 1fr;}}
+  .span-2{grid-column:span 2;}
+
+  /* Table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead tr{border-bottom:1px solid var(--border);}
+  th{text-align:left;padding:12px 16px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dimmer);}
+  tbody tr{border-bottom:1px solid var(--border);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--bg);}
+  td{padding:12px 16px;}
+
+  .row-actions{display:flex;gap:2px;justify-content:flex-end;}
+
+  /* Invoice items row */
+  .item-row{padding:12px;border:1px solid var(--border);border-radius:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  @media(min-width:640px){.item-row{grid-template-columns:repeat(12,1fr);}}
+  .col-4{grid-column:span 2;}
+  @media(min-width:640px){.col-4{grid-column:span 4;}}
+  .col-1{grid-column:span 1;}
+  .col-2{grid-column:span 1;}
+  @media(min-width:640px){.col-2{grid-column:span 2;}}
+
+  .preset-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .preset-btn{padding:7px 13px;border-radius:9px;font-size:11.5px;font-weight:700;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;}
+  .preset-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .totals-strip{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13.5px;}
+  @media(min-width:640px){.totals-strip{grid-template-columns:1fr 1fr 1fr;}}
+
+  /* Charts */
+  .chart-svg{width:100%;height:230px;}
+  .chart-bar{fill:var(--accent);}
+  .chart-label{font-size:5.5px;fill:var(--text-dim);}
+  .donut-wrap{display:flex;flex-direction:column;align-items:center;}
+  .donut-svg{width:160px;height:160px;}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-dim);}
+  .legend-dot{width:9px;height:9px;border-radius:50%;}
+
+  /* Toggle switch */
+  .toggle{width:40px;height:23px;border-radius:999px;background:var(--border);border:none;cursor:pointer;position:relative;padding:0;flex-shrink:0;transition:background .15s;}
+  .toggle.on{background:var(--accent);}
+  .toggle-knob{position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .toggle.on .toggle-knob{transform:translateX(17px);}
+
+  /* Payment method rows in settings */
+  .pm-row{padding:14px 0;border-bottom:1px solid var(--border);}
+  .pm-row:last-child{border-bottom:none;}
+  .pm-row-top{display:flex;align-items:center;justify-content:space-between;}
+  .pm-label-group{display:flex;align-items:center;gap:10px;}
+  .pm-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .pm-label{font-weight:600;font-size:13.5px;}
+  .pm-detail{margin-top:12px;padding:14px;border-radius:12px;background:var(--bg);display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;}
+
+  /* Invoice preview (print template) — fixed light styling regardless of dark mode */
+  .invoice-preview{background:#fff;color:#111827;border-radius:20px;border:1px solid #e5e7eb;padding:24px;max-width:800px;margin:0 auto;font-family:inherit;}
+  @media(min-width:640px){.invoice-preview{padding:40px;}}
+  .inv-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;padding-bottom:24px;border-bottom:1px solid #f3f4f6;}
+  .inv-logo{width:56px;height:56px;border-radius:14px;object-fit:contain;}
+  .inv-logo-fallback{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;}
+  .inv-biz-name{font-weight:700;font-size:18px;letter-spacing:-0.01em;}
+  .inv-tag{font-size:12px;color:#9ca3af;font-style:italic;}
+  .inv-title{font-size:26px;font-weight:800;letter-spacing:-0.02em;text-align:right;}
+  .inv-meta{font-size:13px;color:#6b7280;text-align:right;margin-top:4px;}
+  .inv-grid{display:grid;grid-template-columns:1fr;gap:24px;padding:24px 0;}
+  @media(min-width:640px){.inv-grid{grid-template-columns:1fr 1fr;}}
+  .inv-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#9ca3af;margin-bottom:6px;}
+  .inv-table{width:100%;font-size:13.5px;}
+  .inv-table thead tr{border-bottom:2px solid #111827;}
+  .inv-table th{padding:8px 0;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;text-align:left;}
+  .inv-table td{padding:10px 0;border-bottom:1px solid #f3f4f6;color:#374151;}
+  .inv-summary{display:flex;justify-content:flex-end;margin-top:16px;}
+  .inv-summary-box{width:100%;max-width:280px;}
+  .inv-summary-row{display:flex;justify-content:space-between;font-size:13.5px;color:#6b7280;padding:3px 0;}
+  .inv-summary-row.total{font-weight:800;font-size:15px;color:#111827;border-top:1px solid #e5e7eb;padding-top:8px;margin-top:6px;}
+  .inv-summary-row.due{font-weight:700;color:#e11d48;}
+  .inv-pay-box{margin-top:20px;padding:16px;border-radius:14px;background:#f9fafb;border:1px solid #f3f4f6;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .inv-qr{width:84px;height:84px;object-fit:contain;border:1px solid #e5e7eb;border-radius:10px;background:#fff;flex-shrink:0;}
+  .inv-footer{display:flex;align-items:flex-end;justify-content:space-between;margin-top:40px;padding-top:24px;border-top:1px solid #f3f4f6;}
+  .inv-sig{height:48px;object-fit:contain;}
+
+  /* Print rules */
+  @media print{
+    body *{visibility:hidden;}
+    .invoice-preview,.invoice-preview *{visibility:visible;}
+    .invoice-preview{position:absolute;top:0;left:0;width:100%;border:none !important;}
+    .no-print{display:none !important;}
+  }
+  @page{size:A4;margin:10mm;}
+
+  .upload-row{display:flex;align-items:center;gap:12px;}
+  .thumb{width:64px;height:64px;border-radius:12px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+  .thumb img{width:100%;height:100%;object-fit:contain;}
+  .upload-label{cursor:pointer;font-size:13px;font-weight:600;padding:8px 14px;border-radius:9px;background:var(--bg);}
+  html.dark .upload-label{background:#334155;}
+
+  .filters-bar{display:grid;grid-template-columns:1fr;gap:8px;}
+  @media(min-width:640px){.filters-bar{grid-template-columns:2fr 1fr 1fr 1.2fr;}}
+  .search-wrap{position:relative;}
+  .search-wrap .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-dimmer);}
+  .search-wrap input{padding-left:34px;}
+
+  .loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;color:var(--text-dimmer);font-size:14px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+/* ---------------------------------- storage adapter ---------------------------------- */
+/* Uses window.storage when available (e.g. inside Claude artifacts); otherwise falls back
+   to localStorage so this file works as a normal standalone website. */
+const storageAdapter = {
+  async get(key) {
+    if (window.storage && typeof window.storage.get === 'function') {
+      try { return await window.storage.get(key, false); } catch (e) { return null; }
+    }
+    const v = localStorage.getItem(key);
+    return v !== null ? { value: v } : null;
+  },
+  async set(key, value) {
+    if (window.storage && typeof window.storage.set === 'function') {
+      try { return await window.storage.set(key, value, false); } catch (e) { return null; }
+    }
+    localStorage.setItem(key, value);
+    return { value };
+  }
+};
+
+/* ---------------------------------- constants ---------------------------------- */
+
+const STORAGE_KEYS = {
+  settings: 'alw-inv-settings',
+  customers: 'alw-inv-customers',
+  products: 'alw-inv-products',
+  invoices: 'alw-inv-invoices',
+  theme: 'alw-inv-theme'
+};
+
+const MOBILE_PAYMENT_DEFS = [
+  { key: 'bkash', label: 'bKash', color: '#e2136e' },
+  { key: 'nagad', label: 'Nagad', color: '#f6921e' },
+  { key: 'rocket', label: 'Rocket', color: '#8c3494' }
+];
+
+const DEFAULT_SETTINGS = {
+  businessName: 'ANAS LUXY WORLD',
+  tagline: 'Vision Becomes Art',
+  owner: 'Amir Khan Anas',
+  email: 'anasluxyworld@gmail.com',
+  phone: '01777-549412',
+  address: 'Dhaka, Bangladesh',
+  website: 'anasluxyworld.com',
+  logo: '',
+  signature: '',
+  cashEnabled: true,
+  bankEnabled: true,
+  bankName: '',
+  accountName: '',
+  accountNumber: '',
+  branchName: '',
+  routingNumber: '',
+  paymentInstructions: '',
+  mobilePayments: {
+    bkash: { enabled: false, number: '', qr: '' },
+    nagad: { enabled: false, number: '', qr: '' },
+    rocket: { enabled: false, number: '', qr: '' }
+  }
+};
+
+function mergeSettings(parsed) {
+  const mp = { ...DEFAULT_SETTINGS.mobilePayments };
+  if (parsed && parsed.mobilePayments) {
+    Object.keys(mp).forEach(k => { mp[k] = { ...mp[k], ...(parsed.mobilePayments[k] || {}) }; });
+  }
+  return { ...DEFAULT_SETTINGS, ...(parsed || {}), mobilePayments: mp };
+}
+
+function getEnabledPaymentMethods(settings) {
+  const list = [];
+  if (settings.cashEnabled !== false) list.push('Cash');
+  if (settings.bankEnabled !== false) list.push('Bank Transfer');
+  MOBILE_PAYMENT_DEFS.forEach(def => {
+    const m = settings.mobilePayments && settings.mobilePayments[def.key];
+    if (m && m.enabled) list.push(def.label);
+  });
+  if (list.length === 0) list.push('Cash');
+  return list;
+}
+
+const DEFAULT_PRODUCTS = [
+  { id: 'p_aurora', name: 'Aurora Swirl Lamp', description: '3D Printed Aurora Swirl Decorative Lamp', price: 0 },
+  { id: 'p_century', name: 'Century Mushroom Lamp', description: '3D Printed Century Mushroom Decorative Lamp', price: 0 },
+  { id: 'p_wavy', name: 'Wavy Lamp', description: '3D Printed Wavy Decorative Lamp', price: 0 },
+  { id: 'p_orbella', name: 'Orbella Floor Lamp', description: '40-inch PETG Orbella Floor Lamp', price: 0 }
+];
+
+const DELIVERY_PRESETS = [
+  { id: 'dhaka', label: 'Dhaka City', amount: 80 },
+  { id: 'outside', label: 'Outside Dhaka', amount: 150 },
+  { id: 'custom', label: 'Custom Amount', amount: 0 }
+];
+
+const STATUS_LIST = ['Draft', 'Unpaid', 'Partially Paid', 'Paid'];
+const STATUS_CLASS = { Draft: 'badge-draft', Unpaid: 'badge-unpaid', 'Partially Paid': 'badge-partial', Paid: 'badge-paid' };
+
+/* ---------------------------------- helpers ---------------------------------- */
+
+function uid(prefix) {
+  return prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+function formatBDT(n) {
+  const num = Number(n) || 0;
+  return '৳' + num.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+function todayISO() { return new Date().toISOString().slice(0, 10); }
+function formatDateDisplay(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function generateInvoiceNumber(invoices) {
+  const year = new Date().getFullYear();
+  const nums = invoices
+    .filter(i => i.invoiceNumber && i.invoiceNumber.includes(String(year)))
+    .map(i => {
+      const m = i.invoiceNumber.match(/(\d+)$/);
+      return m ? parseInt(m[1], 10) : 0;
+    });
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return `INV-${year}-${String(next).padStart(4, '0')}`;
+}
+function computeTotals(items, discount, deliveryCharge, additionalCharges, advancePaid) {
+  const subtotal = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unitPrice) || 0), 0);
+  const grandTotal = subtotal - (Number(discount) || 0) + (Number(deliveryCharge) || 0) + (Number(additionalCharges) || 0);
+  const dueAmount = grandTotal - (Number(advancePaid) || 0);
+  return { subtotal, grandTotal, dueAmount };
+}
+function blankInvoice(invoices, settings) {
+  return {
+    id: null,
+    invoiceNumber: generateInvoiceNumber(invoices),
+    date: todayISO(),
+    dueDate: '',
+    customerId: '',
+    customerSnapshot: { name: '', phone: '', email: '', address: '' },
+    items: [{ id: uid('it'), productId: '', description: '', qty: 1, unitPrice: 0 }],
+    discount: 0,
+    deliveryPreset: 'dhaka',
+    deliveryCharge: 80,
+    additionalCharges: 0,
+    advancePaid: 0,
+    status: 'Draft',
+    paymentMethod: getEnabledPaymentMethods(settings)[0] || 'Cash',
+    notes: '',
+    createdAt: new Date().toISOString()
+  };
+}
+function cx(...a) { return a.filter(Boolean).join(' '); }
+
+/* ---------------------------------- icons (hand-drawn, generic) ---------------------------------- */
+
+function Icon({ name, size = 18, className = '' }) {
+  const p = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', className };
+  const icons = {
+    dashboard: <svg {...p}><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>,
+    invoice: <svg {...p}><path d="M6 2.5h8l5 5V21H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>,
+    users: <svg {...p}><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17.5" cy="9.5" r="2.5"/><path d="M21 20c0-2.6-1.9-4.7-4.4-5.4"/></svg>,
+    package: <svg {...p}><path d="M21 7.5L12 3 3 7.5 12 12l9-4.5z"/><path d="M3 7.5v9L12 21l9-4.5v-9"/><path d="M12 12v9"/></svg>,
+    settings: <svg {...p}><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a8 8 0 000-2l2-1.6-2-3.4-2.4 1a8 8 0 00-1.7-1L15 3h-6l-.3 2.6a8 8 0 00-1.7 1l-2.4-1-2 3.4 2 1.6a8 8 0 000 2l-2 1.6 2 3.4 2.4-1a8 8 0 001.7 1L9 21h6l.3-2.6a8 8 0 001.7-1l2.4 1 2-3.4z"/></svg>,
+    plus: <svg {...p}><path d="M12 5v14M5 12h14"/></svg>,
+    search: <svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
+    trash: <svg {...p}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>,
+    edit: <svg {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>,
+    copy: <svg {...p}><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg>,
+    x: <svg {...p}><path d="M18 6L6 18M6 6l12 12"/></svg>,
+    check: <svg {...p}><path d="M20 6L9 17l-5-5"/></svg>,
+    upload: <svg {...p}><path d="M12 16V4M5.5 9.5L12 3l6.5 6.5"/><path d="M4 20h16"/></svg>,
+    arrowLeft: <svg {...p}><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
+    trending: <svg {...p}><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>,
+    wallet: <svg {...p}><rect x="2" y="6" width="20" height="14" rx="2.5"/><path d="M2 10h20"/><circle cx="17" cy="14" r="1.4"/></svg>,
+    clock: <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>,
+    checkCircle: <svg {...p}><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg>,
+    share: <svg {...p}><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.6l7.5-3.9M8.3 13.4l7.5 3.9"/></svg>,
+    printer: <svg {...p}><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 17h12v4H6z"/></svg>,
+    download: <svg {...p}><path d="M12 4v12M6.5 11l5.5 5.5L17.5 11"/><path d="M4 20h16"/></svg>,
+    sun: <svg {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>,
+    moon: <svg {...p}><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>,
+    menu: <svg {...p}><path d="M4 6h16M4 12h16M4 18h16"/></svg>,
+    alert: <svg {...p}><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>,
+    qr: <svg {...p}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
+  };
+  return icons[name] || null;
+}
+
+/* ---------------------------------- tiny UI atoms ---------------------------------- */
+
+function Btn({ variant = 'secondary', className, children, ...props }) {
+  return <button className={cx('btn', 'btn-' + variant, className)} {...props}>{children}</button>;
+}
+function Card({ className, children, style }) {
+  return <div className={cx('card', className)} style={style}>{children}</div>;
+}
+function Label({ children }) { return <label className="label">{children}</label>; }
+function Field({ label, children }) {
+  return <div className="field"><Label>{label}</Label>{children}</div>;
+}
+function Input(props) { return <input className={cx('input', props.className)} {...props} />; }
+function Select({ children, ...props }) { return <select className={cx('select', props.className)} {...props}>{children}</select>; }
+function TextArea(props) { return <textarea className={cx('textarea', props.className)} {...props} />; }
+function Badge({ status }) {
+  return <span className={cx('badge', STATUS_CLASS[status] || 'badge-draft')}>{status}</span>;
+}
+function Toggle({ checked, onChange }) {
+  return (
+    <button type="button" className={cx('toggle', checked && 'on')} onClick={() => onChange(!checked)}>
+      <span className="toggle-knob" />
+    </button>
+  );
+}
+function Modal({ title, onClose, children, wide }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className={cx('modal', wide && 'wide')} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <h3 className="modal-title">{title}</h3>
+          <button className="icon-btn" onClick={onClose}><Icon name="x" size={18} /></button>
+        </div>
+        <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
+function ToastStack({ toasts }) {
+  return (
+    <div className="toast-stack">
+      {toasts.map(t => (
+        <div key={t.id} className={cx('toast', t.type)}>
+          <Icon name={t.type === 'error' ? 'alert' : 'checkCircle'} size={16} />
+          {t.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+function StatCard({ icon, label, value, bg, color }) {
+  return (
+    <Card className="card-pad">
+      <div className="stat-icon" style={{ background: bg, color }}><Icon name={icon} size={17} /></div>
+      <div className="stat-label">{label}</div>
+      <div className="stat-value">{value}</div>
+    </Card>
+  );
+}
+function EmptyState({ icon, title, subtitle }) {
+  return (
+    <div className="empty-state">
+      <div className="empty-icon"><Icon name={icon} size={26} /></div>
+      <div className="empty-title">{title}</div>
+      <div className="empty-sub">{subtitle}</div>
+    </div>
+  );
+}
+function ConfirmModal({ data, onClose }) {
+  if (!data) return null;
+  return (
+    <Modal title={data.title || 'Are you sure?'} onClose={onClose}>
+      <p style={{ fontSize: 13.5, color: 'var(--text-dim)', marginBottom: 20 }}>{data.message}</p>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+        <Btn variant="danger" onClick={() => { data.onConfirm(); onClose(); }}>Confirm</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+/* ---------------------------------- simple charts (no external libs) ---------------------------------- */
+
+function BarChartSVG({ data }) {
+  const max = Math.max(1, ...data.map(d => d.revenue));
+  const w = 600, h = 230, padBottom = 26, padTop = 10;
+  const gap = w / data.length;
+  const barW = gap * 0.5;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="chart-svg" preserveAspectRatio="xMidYMid meet">
+      {data.map((d, i) => {
+        const barH = max ? (d.revenue / max) * (h - padBottom - padTop) : 0;
+        const x = i * gap + (gap - barW) / 2;
+        const y = h - padBottom - barH;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={Math.max(barH, 2)} rx="5" className="chart-bar">
+              <title>{d.month}: {formatBDT(d.revenue)}</title>
+            </rect>
+            <text x={x + barW / 2} y={h - 8} textAnchor="middle" className="chart-label" style={{ fontSize: 9 }}>{d.month}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function DonutChart({ data }) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  const r = 40, c = 2 * Math.PI * r;
+  let offset = 0;
+  return (
+    <div className="donut-wrap">
+      <svg viewBox="0 0 100 100" className="donut-svg">
+        <g transform="rotate(-90 50 50)">
+          <circle cx="50" cy="50" r={r} fill="none" stroke="var(--border)" strokeWidth="14" />
+          {data.map((d, i) => {
+            const frac = d.value / total;
+            const dash = frac * c;
+            const seg = (
+              <circle key={i} cx="50" cy="50" r={r} fill="none" stroke={d.color} strokeWidth="14"
+                strokeDasharray={`${dash} ${c - dash}`} strokeDashoffset={-offset}>
+                <title>{d.name}: {d.value}</title>
+              </circle>
+            );
+            offset += dash;
+            return seg;
+          })}
+        </g>
+      </svg>
+      <div className="legend">
+        {data.map(d => (
+          <div key={d.name} className="legend-item">
+            <span className="legend-dot" style={{ background: d.color }} />{d.name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- Sidebar / Nav ---------------------------------- */
+
+const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { id: 'invoices', label: 'Invoices', icon: 'invoice' },
+  { id: 'customers', label: 'Customers', icon: 'users' },
+  { id: 'products', label: 'Products', icon: 'package' },
+  { id: 'settings', label: 'Settings', icon: 'settings' }
+];
+
+function Sidebar({ view, setView, onNewInvoice, mobileOpen, setMobileOpen, toggleDark, dark }) {
+  return (
+    <React.Fragment>
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-logo">AL</div>
+          <div>
+            <div className="brand-name">ANAS LUXY WORLD</div>
+            <div className="brand-tag">Vision Becomes Art</div>
+          </div>
+        </div>
+        <div style={{ padding: '0 12px 12px' }}>
+          <Btn variant="primary" style={{ width: '100%' }} onClick={onNewInvoice}><Icon name="plus" size={16} /> New Invoice</Btn>
+        </div>
+        <nav className="nav">
+          {NAV_ITEMS.map(item => (
+            <button key={item.id} className={cx('nav-item', view === item.id && 'active')} onClick={() => setView(item.id)}>
+              <Icon name={item.icon} size={17} /> {item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="side-bottom">
+          <button className="nav-item" onClick={toggleDark}>
+            <Icon name={dark ? 'sun' : 'moon'} size={17} /> {dark ? 'Light Mode' : 'Dark Mode'}
+          </button>
+        </div>
+      </aside>
+
+      <div className="topbar">
+        <div className="topbar-left">
+          <div className="brand-logo" style={{ width: 30, height: 30, fontSize: 11 }}>AL</div>
+          <span style={{ fontWeight: 700, fontSize: 13.5 }}>ANAS LUXY WORLD</span>
+        </div>
+        <div style={{ display: 'flex', gap: 2 }}>
+          <button className="icon-btn" onClick={toggleDark}><Icon name={dark ? 'sun' : 'moon'} size={18} /></button>
+          <button className="icon-btn" onClick={() => setMobileOpen(!mobileOpen)}><Icon name="menu" size={20} /></button>
+        </div>
+      </div>
+      {mobileOpen && (
+        <div className="mobile-drawer-overlay" onClick={() => setMobileOpen(false)}>
+          <div className="mobile-drawer" onClick={e => e.stopPropagation()}>
+            <Btn variant="primary" style={{ width: '100%', marginBottom: 14 }} onClick={() => { onNewInvoice(); setMobileOpen(false); }}>
+              <Icon name="plus" size={16} /> New Invoice
+            </Btn>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {NAV_ITEMS.map(item => (
+                <button key={item.id} className={cx('nav-item', view === item.id && 'active')} onClick={() => { setView(item.id); setMobileOpen(false); }}>
+                  <Icon name={item.icon} size={17} /> {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
+
+/* ---------------------------------- Dashboard ---------------------------------- */
+
+function Dashboard({ invoices }) {
+  const stats = useMemo(() => {
+    const today = todayISO();
+    const monthKey = today.slice(0, 7);
+    const billable = invoices.filter(i => i.status !== 'Draft');
+
+    const todaysSales = billable.filter(i => i.date === today).reduce((s, i) => s + i.grandTotal, 0);
+    const monthSales = billable.filter(i => (i.date || '').slice(0, 7) === monthKey).reduce((s, i) => s + i.grandTotal, 0);
+    const outstandingDue = invoices.filter(i => i.status === 'Unpaid' || i.status === 'Partially Paid').reduce((s, i) => s + i.dueAmount, 0);
+    const totalPaidRevenue = billable.reduce((s, i) => s + (i.grandTotal - i.dueAmount), 0);
+
+    const productTotals = {};
+    billable.forEach(inv => inv.items.forEach(it => {
+      const key = it.description || 'Item';
+      productTotals[key] = (productTotals[key] || 0) + (Number(it.qty) || 0);
+    }));
+    const topProducts = Object.entries(productTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    const recent = [...invoices].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
+    const monthly = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(); d.setMonth(d.getMonth() - i);
+      const key = d.toISOString().slice(0, 7);
+      const label = d.toLocaleDateString('en-US', { month: 'short' });
+      const total = billable.filter(inv => (inv.date || '').slice(0, 7) === key).reduce((s, inv) => s + inv.grandTotal, 0);
+      monthly.push({ month: label, revenue: total });
+    }
+
+    const colorMap = { Draft: '#94a3b8', Unpaid: '#fb7185', 'Partially Paid': '#f59e0b', Paid: '#10b981' };
+    const statusDist = STATUS_LIST
+      .map(s => ({ name: s, value: invoices.filter(i => i.status === s).length, color: colorMap[s] }))
+      .filter(s => s.value > 0);
+
+    return { todaysSales, monthSales, outstandingDue, totalPaidRevenue, topProducts, recent, monthly, statusDist };
+  }, [invoices]);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <h1 className="page-title">Dashboard</h1>
+
+      <div className="stat-grid">
+        <StatCard icon="trending" label="Today's Sales" value={formatBDT(stats.todaysSales)} bg="var(--accent-light)" color="var(--accent)" />
+        <StatCard icon="wallet" label="This Month's Sales" value={formatBDT(stats.monthSales)} bg="var(--violet-light)" color="var(--violet)" />
+        <StatCard icon="clock" label="Outstanding Due" value={formatBDT(stats.outstandingDue)} bg="var(--rose-light)" color="var(--rose)" />
+        <StatCard icon="checkCircle" label="Total Paid Revenue" value={formatBDT(stats.totalPaidRevenue)} bg="var(--emerald-light)" color="var(--emerald)" />
+      </div>
+
+      <div className="grid-3">
+        <Card className="card-pad" style={{ gridColumn: 'span 2' }}>
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 16px' }}>Monthly Revenue</h3>
+          <BarChartSVG data={stats.monthly} />
+        </Card>
+        <Card className="card-pad">
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 10px' }}>Invoice Status</h3>
+          {stats.statusDist.length === 0
+            ? <div style={{ fontSize: 13, color: 'var(--text-dimmer)', textAlign: 'center', padding: '40px 0' }}>No invoices yet</div>
+            : <DonutChart data={stats.statusDist} />}
+        </Card>
+      </div>
+
+      <div className="grid-2">
+        <Card className="card-pad">
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 12px' }}>Top Selling Products</h3>
+          {stats.topProducts.length === 0
+            ? <div style={{ fontSize: 13, color: 'var(--text-dimmer)', textAlign: 'center', padding: '20px 0' }}>No sales data yet</div>
+            : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {stats.topProducts.map(([name, qty], i) => (
+                  <div key={name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <span style={{ width: 24, height: 24, borderRadius: 8, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{i + 1}</span>
+                      <span style={{ fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                    </div>
+                    <span style={{ fontSize: 13.5, fontWeight: 700, flexShrink: 0 }}>{qty} sold</span>
+                  </div>
+                ))}
+              </div>}
+        </Card>
+        <Card className="card-pad">
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 12px' }}>Recent Invoices</h3>
+          {stats.recent.length === 0
+            ? <div style={{ fontSize: 13, color: 'var(--text-dimmer)', textAlign: 'center', padding: '20px 0' }}>No invoices yet</div>
+            : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {stats.recent.map(inv => (
+                  <div key={inv.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inv.invoiceNumber}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-dimmer)' }}>{inv.customerSnapshot.name || 'No customer'}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      <span style={{ fontSize: 13.5, fontWeight: 700 }}>{formatBDT(inv.grandTotal)}</span>
+                      <Badge status={inv.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- Customers ---------------------------------- */
+
+function CustomerModal({ editing, onSave, onClose }) {
+  const [form, setForm] = useState(editing || { name: '', phone: '', email: '', address: '', notes: '' });
+  const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <Modal title={editing ? 'Edit Customer' : 'Add Customer'} onClose={onClose}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Field label="Customer Name"><Input value={form.name} onChange={e => update('name', e.target.value)} placeholder="Full name" /></Field>
+        <Field label="Phone Number"><Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="01XXXXXXXXX" /></Field>
+        <Field label="Email"><Input value={form.email} onChange={e => update('email', e.target.value)} placeholder="email@example.com" /></Field>
+        <Field label="Address"><TextArea rows={2} value={form.address} onChange={e => update('address', e.target.value)} placeholder="Delivery address" /></Field>
+        <Field label="Notes"><TextArea rows={2} value={form.notes} onChange={e => update('notes', e.target.value)} placeholder="Optional notes" /></Field>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+        <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+        <Btn variant="primary" disabled={!form.name.trim()} onClick={() => onSave(form)}><Icon name="check" size={16} /> Save Customer</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function CustomersPage({ customers, onAdd, onUpdate, onDelete }) {
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const filtered = customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || (c.phone || '').includes(search));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <h1 className="page-title">Customers</h1>
+        <Btn variant="primary" onClick={() => setModal({ editing: null })}><Icon name="plus" size={16} /> Add Customer</Btn>
+      </div>
+      <div className="search-wrap" style={{ maxWidth: 320 }}>
+        <span className="search-icon"><Icon name="search" size={16} /></span>
+        <Input placeholder="Search customers..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {filtered.length === 0
+        ? <EmptyState icon="users" title="No customers found" subtitle="Add your first customer to get started" />
+        : <div className="grid-3">
+            {filtered.map(c => (
+              <Card key={c.id} className="card-pad">
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--text-dimmer)' }}>{c.phone}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                    <button className="icon-btn" onClick={() => setModal({ editing: c })}><Icon name="edit" size={14} /></button>
+                    <button className="icon-btn" style={{ color: 'var(--rose)' }} onClick={() => setConfirm({ message: `Delete customer "${c.name}"?`, onConfirm: () => onDelete(c.id) })}><Icon name="trash" size={14} /></button>
+                  </div>
+                </div>
+                {c.email && <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 4 }}>{c.email}</div>}
+                {c.address && <div style={{ fontSize: 12, color: 'var(--text-dimmer)' }}>{c.address}</div>}
+              </Card>
+            ))}
+          </div>}
+      {modal && (
+        <CustomerModal editing={modal.editing} onClose={() => setModal(null)}
+          onSave={(data) => { modal.editing ? onUpdate({ ...modal.editing, ...data }) : onAdd(data); setModal(null); }} />
+      )}
+      <ConfirmModal data={confirm} onClose={() => setConfirm(null)} />
+    </div>
+  );
+}
+
+/* ---------------------------------- Products ---------------------------------- */
+
+function ProductModal({ editing, onSave, onClose }) {
+  const [form, setForm] = useState(editing || { name: '', description: '', price: 0 });
+  const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <Modal title={editing ? 'Edit Product' : 'Add Product'} onClose={onClose}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Field label="Product Name"><Input value={form.name} onChange={e => update('name', e.target.value)} placeholder="Product name" /></Field>
+        <Field label="Description"><TextArea rows={2} value={form.description} onChange={e => update('description', e.target.value)} placeholder="Short description" /></Field>
+        <Field label="Price (BDT)"><Input type="number" value={form.price} onChange={e => update('price', e.target.value)} placeholder="0" /></Field>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+        <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
+        <Btn variant="primary" disabled={!form.name.trim()} onClick={() => onSave(form)}><Icon name="check" size={16} /> Save Product</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+function ProductsPage({ products, onAdd, onUpdate, onDelete }) {
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <h1 className="page-title">Products</h1>
+        <Btn variant="primary" onClick={() => setModal({ editing: null })}><Icon name="plus" size={16} /> Add Product</Btn>
+      </div>
+      <div className="search-wrap" style={{ maxWidth: 320 }}>
+        <span className="search-icon"><Icon name="search" size={16} /></span>
+        <Input placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+      {filtered.length === 0
+        ? <EmptyState icon="package" title="No products found" subtitle="Add a product to use it in invoices" />
+        : <div className="grid-3">
+            {filtered.map(pr => (
+              <Card key={pr.id} className="card-pad">
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pr.name}</div>
+                    <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--accent)' }}>{formatBDT(pr.price)}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                    <button className="icon-btn" onClick={() => setModal({ editing: pr })}><Icon name="edit" size={14} /></button>
+                    <button className="icon-btn" style={{ color: 'var(--rose)' }} onClick={() => setConfirm({ message: `Delete product "${pr.name}"?`, onConfirm: () => onDelete(pr.id) })}><Icon name="trash" size={14} /></button>
+                  </div>
+                </div>
+                {pr.description && <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{pr.description}</div>}
+              </Card>
+            ))}
+          </div>}
+      {modal && (
+        <ProductModal editing={modal.editing} onClose={() => setModal(null)}
+          onSave={(data) => { modal.editing ? onUpdate({ ...modal.editing, ...data, price: Number(data.price) || 0 }) : onAdd({ ...data, price: Number(data.price) || 0 }); setModal(null); }} />
+      )}
+      <ConfirmModal data={confirm} onClose={() => setConfirm(null)} />
+    </div>
+  );
+}
+
+/* ---------------------------------- Settings ---------------------------------- */
+
+function SettingsPage({ settings, onSave, addToast }) {
+  const [form, setForm] = useState(settings);
+  const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const updateMobile = (key, field, value) => setForm(f => ({
+    ...f, mobilePayments: { ...f.mobilePayments, [key]: { ...f.mobilePayments[key], [field]: value } }
+  }));
+  const handleFile = (key) => (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => update(key, reader.result);
+    reader.readAsDataURL(file);
+  };
+  const handleMobileQR = (key) => (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => updateMobile(key, 'qr', reader.result);
+    reader.readAsDataURL(file);
+  };
+  const save = () => { onSave(form); addToast('Settings saved'); };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 760 }}>
+      <h1 className="page-title">Settings</h1>
+
+      <Card className="card-pad">
+        <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 16px' }}>Business Information</h3>
+        <div className="grid-form2">
+          <Field label="Business Name"><Input value={form.businessName} onChange={e => update('businessName', e.target.value)} /></Field>
+          <Field label="Tagline"><Input value={form.tagline} onChange={e => update('tagline', e.target.value)} /></Field>
+          <Field label="Owner"><Input value={form.owner} onChange={e => update('owner', e.target.value)} /></Field>
+          <Field label="Email"><Input value={form.email} onChange={e => update('email', e.target.value)} /></Field>
+          <Field label="Phone"><Input value={form.phone} onChange={e => update('phone', e.target.value)} /></Field>
+          <Field label="Website"><Input value={form.website} onChange={e => update('website', e.target.value)} /></Field>
+          <div className="span-2"><Field label="Address"><TextArea rows={2} value={form.address} onChange={e => update('address', e.target.value)} /></Field></div>
+        </div>
+      </Card>
+
+      <Card className="card-pad">
+        <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 16px' }}>Logo & Signature</h3>
+        <div className="grid-form2">
+          <div>
+            <Label>Logo</Label>
+            <div className="upload-row">
+              <div className="thumb">{form.logo ? <img src={form.logo} /> : <Icon name="upload" size={18} />}</div>
+              <label className="upload-label">Upload<input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile('logo')} /></label>
+            </div>
+          </div>
+          <div>
+            <Label>Signature</Label>
+            <div className="upload-row">
+              <div className="thumb">{form.signature ? <img src={form.signature} /> : <Icon name="upload" size={18} />}</div>
+              <label className="upload-label">Upload<input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile('signature')} /></label>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="card-pad">
+        <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 4px' }}>Payment Methods</h3>
+        <p style={{ fontSize: 12, color: 'var(--text-dimmer)', margin: '0 0 6px' }}>Turn on the payment options you accept. Only enabled methods appear on invoices.</p>
+
+        <div className="pm-row">
+          <div className="pm-row-top">
+            <div className="pm-label-group"><span className="pm-dot" style={{ background: '#10b981' }} /><span className="pm-label">Cash</span></div>
+            <Toggle checked={form.cashEnabled !== false} onChange={v => update('cashEnabled', v)} />
+          </div>
+        </div>
+
+        <div className="pm-row">
+          <div className="pm-row-top">
+            <div className="pm-label-group"><span className="pm-dot" style={{ background: '#4f46e5' }} /><span className="pm-label">Bank Transfer</span></div>
+            <Toggle checked={form.bankEnabled !== false} onChange={v => update('bankEnabled', v)} />
+          </div>
+          {form.bankEnabled !== false && <p style={{ fontSize: 11.5, color: 'var(--text-dimmer)', margin: '8px 0 0' }}>Fill in your bank account details below.</p>}
+        </div>
+
+        {MOBILE_PAYMENT_DEFS.map(def => {
+          const m = form.mobilePayments[def.key];
+          return (
+            <div key={def.key} className="pm-row">
+              <div className="pm-row-top">
+                <div className="pm-label-group"><span className="pm-dot" style={{ background: def.color }} /><span className="pm-label">{def.label}</span></div>
+                <Toggle checked={!!m.enabled} onChange={v => updateMobile(def.key, 'enabled', v)} />
+              </div>
+              {m.enabled && (
+                <div className="pm-detail">
+                  <div style={{ flex: '1 1 180px' }}>
+                    <Label>{def.label} Number</Label>
+                    <Input value={m.number} onChange={e => updateMobile(def.key, 'number', e.target.value)} placeholder="01XXXXXXXXX" />
+                  </div>
+                  <div>
+                    <Label>QR Code</Label>
+                    <div className="upload-row">
+                      <div className="thumb">{m.qr ? <img src={m.qr} /> : <Icon name="qr" size={18} />}</div>
+                      <label className="upload-label">Upload<input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleMobileQR(def.key)} /></label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </Card>
+
+      {form.bankEnabled !== false && (
+        <Card className="card-pad">
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 16px' }}>Bank Details</h3>
+          <div className="grid-form2">
+            <Field label="Bank Name"><Input value={form.bankName} onChange={e => update('bankName', e.target.value)} /></Field>
+            <Field label="Account Name"><Input value={form.accountName} onChange={e => update('accountName', e.target.value)} /></Field>
+            <Field label="Account Number"><Input value={form.accountNumber} onChange={e => update('accountNumber', e.target.value)} /></Field>
+            <Field label="Branch Name"><Input value={form.branchName} onChange={e => update('branchName', e.target.value)} /></Field>
+            <Field label="Routing Number"><Input value={form.routingNumber} onChange={e => update('routingNumber', e.target.value)} /></Field>
+            <div className="span-2"><Field label="Payment Instructions"><TextArea rows={2} value={form.paymentInstructions} onChange={e => update('paymentInstructions', e.target.value)} /></Field></div>
+          </div>
+        </Card>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Btn variant="primary" onClick={save}><Icon name="check" size={16} /> Save Settings</Btn>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- Invoice Form ---------------------------------- */
+
+function InvoiceForm({ invoices, customers, products, settings, initial, onSave, onCancel, onQuickAddCustomer }) {
+  const [form, setForm] = useState(() => initial || blankInvoice(invoices, settings));
+  const [quickCustomer, setQuickCustomer] = useState(false);
+  const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const enabledMethods = useMemo(() => {
+    const list = getEnabledPaymentMethods(settings);
+    if (form.paymentMethod && !list.includes(form.paymentMethod)) list.push(form.paymentMethod);
+    return list;
+  }, [settings, form.paymentMethod]);
+
+  const totals = useMemo(
+    () => computeTotals(form.items, form.discount, form.deliveryCharge, form.additionalCharges, form.advancePaid),
+    [form.items, form.discount, form.deliveryCharge, form.additionalCharges, form.advancePaid]
+  );
+
+  const selectCustomer = (id) => {
+    const c = customers.find(c => c.id === id);
+    update('customerId', id);
+    if (c) update('customerSnapshot', { name: c.name, phone: c.phone, email: c.email, address: c.address });
+  };
+  const updateItem = (id, patch) => setForm(f => ({ ...f, items: f.items.map(it => it.id === id ? { ...it, ...patch } : it) }));
+  const selectItemProduct = (id, productId) => {
+    const p = products.find(p => p.id === productId);
+    updateItem(id, p ? { productId, description: p.description || p.name, unitPrice: p.price } : { productId: '' });
+  };
+  const addItem = () => setForm(f => ({ ...f, items: [...f.items, { id: uid('it'), productId: '', description: '', qty: 1, unitPrice: 0 }] }));
+  const removeItem = (id) => setForm(f => ({ ...f, items: f.items.length > 1 ? f.items.filter(it => it.id !== id) : f.items }));
+  const selectDeliveryPreset = (presetId) => {
+    const preset = DELIVERY_PRESETS.find(p => p.id === presetId);
+    setForm(f => ({ ...f, deliveryPreset: presetId, deliveryCharge: presetId === 'custom' ? f.deliveryCharge : preset.amount }));
+  };
+  const handleSubmit = () => onSave({ ...form, subtotal: totals.subtotal, grandTotal: totals.grandTotal, dueAmount: totals.dueAmount });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 920 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button className="icon-btn" onClick={onCancel}><Icon name="arrowLeft" size={18} /></button>
+        <h1 className="page-title" style={{ margin: 0 }}>{initial ? 'Edit Invoice' : 'Create Invoice'}</h1>
+      </div>
+
+      <Card className="card-pad">
+        <div className="grid-form3">
+          <Field label="Invoice Number"><Input value={form.invoiceNumber} disabled /></Field>
+          <Field label="Invoice Date"><Input type="date" value={form.date} onChange={e => update('date', e.target.value)} /></Field>
+          <Field label="Due Date"><Input type="date" value={form.dueDate} onChange={e => update('dueDate', e.target.value)} /></Field>
+        </div>
+      </Card>
+
+      <Card className="card-pad">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: 0 }}>Billed To</h3>
+          <button onClick={() => setQuickCustomer(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="plus" size={14} /> New Customer</button>
+        </div>
+        <Field label="Select Customer">
+          <Select value={form.customerId} onChange={e => selectCustomer(e.target.value)}>
+            <option value="">-- Select a customer --</option>
+            {customers.map(c => <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ''}</option>)}
+          </Select>
+        </Field>
+        <div className="grid-form2" style={{ marginTop: 12 }}>
+          <Field label="Name"><Input value={form.customerSnapshot.name} onChange={e => update('customerSnapshot', { ...form.customerSnapshot, name: e.target.value })} /></Field>
+          <Field label="Phone"><Input value={form.customerSnapshot.phone} onChange={e => update('customerSnapshot', { ...form.customerSnapshot, phone: e.target.value })} /></Field>
+          <Field label="Email"><Input value={form.customerSnapshot.email} onChange={e => update('customerSnapshot', { ...form.customerSnapshot, email: e.target.value })} /></Field>
+          <Field label="Address"><Input value={form.customerSnapshot.address} onChange={e => update('customerSnapshot', { ...form.customerSnapshot, address: e.target.value })} /></Field>
+        </div>
+      </Card>
+
+      <Card className="card-pad">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: 0 }}>Items</h3>
+          <Btn variant="secondary" onClick={addItem}><Icon name="plus" size={14} /> Add Item</Btn>
+        </div>
+        {form.items.map(it => (
+          <div key={it.id} className="item-row">
+            <div className="col-4">
+              <Label>Product</Label>
+              <Select value={it.productId} onChange={e => selectItemProduct(it.id, e.target.value)}>
+                <option value="">Custom item</option>
+                {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </Select>
+            </div>
+            <div className="col-4">
+              <Label>Description</Label>
+              <Input value={it.description} onChange={e => updateItem(it.id, { description: e.target.value })} />
+            </div>
+            <div className="col-1">
+              <Label>Qty</Label>
+              <Input type="number" min="1" value={it.qty} onChange={e => updateItem(it.id, { qty: e.target.value })} />
+            </div>
+            <div className="col-2">
+              <Label>Unit Price</Label>
+              <Input type="number" value={it.unitPrice} onChange={e => updateItem(it.id, { unitPrice: e.target.value })} />
+            </div>
+            <div className="col-1" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gridColumn: 'span 2' }}>
+              <div>
+                <Label>Amount</Label>
+                <div style={{ fontSize: 13.5, fontWeight: 700, paddingTop: 7 }}>{formatBDT((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}</div>
+              </div>
+              <button className="icon-btn" style={{ color: 'var(--rose)' }} onClick={() => removeItem(it.id)}><Icon name="trash" size={14} /></button>
+            </div>
+          </div>
+        ))}
+      </Card>
+
+      <Card className="card-pad">
+        <h3 style={{ fontSize: 13.5, fontWeight: 700, margin: '0 0 12px' }}>Charges & Payment</h3>
+        <div className="grid-form2">
+          <Field label="Discount (BDT)"><Input type="number" value={form.discount} onChange={e => update('discount', e.target.value)} /></Field>
+          <Field label="Additional Charges (BDT)"><Input type="number" value={form.additionalCharges} onChange={e => update('additionalCharges', e.target.value)} /></Field>
+
+          <div className="span-2">
+            <Label>Delivery Charge</Label>
+            <div className="preset-row">
+              {DELIVERY_PRESETS.map(p => (
+                <button key={p.id} className={cx('preset-btn', form.deliveryPreset === p.id && 'active')} onClick={() => selectDeliveryPreset(p.id)}>
+                  {p.label}{p.id !== 'custom' ? ` (${formatBDT(p.amount)})` : ''}
+                </button>
+              ))}
+            </div>
+            <Input type="number" value={form.deliveryCharge} disabled={form.deliveryPreset !== 'custom'} onChange={e => update('deliveryCharge', e.target.value)} />
+          </div>
+
+          <Field label="Advance Paid (BDT)"><Input type="number" value={form.advancePaid} onChange={e => update('advancePaid', e.target.value)} /></Field>
+          <Field label="Payment Method">
+            <Select value={form.paymentMethod} onChange={e => update('paymentMethod', e.target.value)}>
+              {enabledMethods.map(m => <option key={m} value={m}>{m}</option>)}
+            </Select>
+          </Field>
+          <Field label="Invoice Status">
+            <Select value={form.status} onChange={e => update('status', e.target.value)}>
+              {STATUS_LIST.map(s => <option key={s} value={s}>{s}</option>)}
+            </Select>
+          </Field>
+          <div className="span-2"><Field label="Notes"><TextArea rows={2} value={form.notes} onChange={e => update('notes', e.target.value)} /></Field></div>
+        </div>
+
+        <div className="totals-strip">
+          <div><span style={{ color: 'var(--text-dim)' }}>Subtotal: </span><span style={{ fontWeight: 700 }}>{formatBDT(totals.subtotal)}</span></div>
+          <div><span style={{ color: 'var(--text-dim)' }}>Grand Total: </span><span style={{ fontWeight: 800, color: 'var(--accent)' }}>{formatBDT(totals.grandTotal)}</span></div>
+          <div><span style={{ color: 'var(--text-dim)' }}>Due: </span><span style={{ fontWeight: 700, color: 'var(--rose)' }}>{formatBDT(totals.dueAmount)}</span></div>
+        </div>
+      </Card>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingBottom: 24 }}>
+        <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
+        <Btn variant="primary" onClick={handleSubmit}><Icon name="check" size={16} /> Save Invoice</Btn>
+      </div>
+
+      {quickCustomer && (
+        <CustomerModal editing={null} onClose={() => setQuickCustomer(false)}
+          onSave={(data) => { const newC = onQuickAddCustomer(data); selectCustomer(newC.id); setQuickCustomer(false); }} />
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------- Invoice Preview ---------------------------------- */
+
+const MOBILE_KEY_BY_LABEL = { bKash: 'bkash', Nagad: 'nagad', Rocket: 'rocket' };
+
+function InvoicePreview({ invoice, settings }) {
+  const mobileKey = MOBILE_KEY_BY_LABEL[invoice.paymentMethod];
+  const mobileInfo = mobileKey && settings.mobilePayments ? settings.mobilePayments[mobileKey] : null;
+  const showBank = invoice.paymentMethod === 'Bank Transfer' && (settings.bankName || settings.accountNumber || settings.paymentInstructions);
+  const showMobile = mobileInfo && (mobileInfo.number || mobileInfo.qr);
+
+  return (
+    <div className="invoice-preview">
+      <div className="inv-head">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {settings.logo ? <img src={settings.logo} className="inv-logo" /> : <div className="inv-logo-fallback">{(settings.businessName || 'A').charAt(0)}</div>}
+          <div>
+            <div className="inv-biz-name">{settings.businessName}</div>
+            <div className="inv-tag">{settings.tagline}</div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className="inv-title">INVOICE</div>
+          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>{invoice.invoiceNumber}</div>
+          <div style={{ fontSize: 11.5, color: '#9ca3af' }}>{formatDateDisplay(invoice.date)}</div>
+          <div style={{ marginTop: 8 }}><Badge status={invoice.status} /></div>
+        </div>
+      </div>
+
+      <div className="inv-grid">
+        <div>
+          <div className="inv-label">Billed To</div>
+          <div style={{ fontWeight: 700 }}>{invoice.customerSnapshot.name || '—'}</div>
+          {invoice.customerSnapshot.phone && <div style={{ fontSize: 13, color: '#6b7280' }}>{invoice.customerSnapshot.phone}</div>}
+          {invoice.customerSnapshot.email && <div style={{ fontSize: 13, color: '#6b7280' }}>{invoice.customerSnapshot.email}</div>}
+          {invoice.customerSnapshot.address && <div style={{ fontSize: 13, color: '#6b7280' }}>{invoice.customerSnapshot.address}</div>}
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className="inv-label">Invoice Details</div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>Due Date: <span style={{ color: '#1f2937', fontWeight: 600 }}>{formatDateDisplay(invoice.dueDate) || '—'}</span></div>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>Payment Method: <span style={{ color: '#1f2937', fontWeight: 600 }}>{invoice.paymentMethod}</span></div>
+        </div>
+      </div>
+
+      <table className="inv-table">
+        <thead><tr><th>Description</th><th style={{ textAlign: 'center' }}>Qty</th><th style={{ textAlign: 'right' }}>Unit Price</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+        <tbody>
+          {invoice.items.map(it => (
+            <tr key={it.id}>
+              <td>{it.description || '—'}</td>
+              <td style={{ textAlign: 'center' }}>{it.qty}</td>
+              <td style={{ textAlign: 'right' }}>{formatBDT(it.unitPrice)}</td>
+              <td style={{ textAlign: 'right', fontWeight: 600, color: '#111827' }}>{formatBDT((Number(it.qty) || 0) * (Number(it.unitPrice) || 0))}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="inv-summary">
+        <div className="inv-summary-box">
+          <div className="inv-summary-row"><span>Subtotal</span><span style={{ color: '#1f2937' }}>{formatBDT(invoice.subtotal)}</span></div>
+          {Number(invoice.discount) > 0 && <div className="inv-summary-row"><span>Discount</span><span style={{ color: '#1f2937' }}>- {formatBDT(invoice.discount)}</span></div>}
+          <div className="inv-summary-row"><span>Delivery Charge</span><span style={{ color: '#1f2937' }}>{formatBDT(invoice.deliveryCharge)}</span></div>
+          {Number(invoice.additionalCharges) > 0 && <div className="inv-summary-row"><span>Additional Charges</span><span style={{ color: '#1f2937' }}>{formatBDT(invoice.additionalCharges)}</span></div>}
+          <div className="inv-summary-row total"><span>Grand Total</span><span>{formatBDT(invoice.grandTotal)}</span></div>
+          <div className="inv-summary-row"><span>Advance Paid</span><span style={{ color: '#1f2937' }}>{formatBDT(invoice.advancePaid)}</span></div>
+          <div className="inv-summary-row due"><span>Due Amount</span><span>{formatBDT(invoice.dueAmount)}</span></div>
+        </div>
+      </div>
+
+      {showMobile && (
+        <div className="inv-pay-box">
+          {mobileInfo.qr && <img src={mobileInfo.qr} className="inv-qr" />}
+          <div>
+            <div className="inv-label" style={{ marginBottom: 4 }}>Pay via {invoice.paymentMethod}</div>
+            {mobileInfo.number && <div style={{ fontSize: 15, fontWeight: 800, color: '#111827' }}>{mobileInfo.number}</div>}
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Scan the QR code or send to the number above</div>
+          </div>
+        </div>
+      )}
+
+      {showBank && (
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #f3f4f6' }}>
+          <div className="inv-label">Bank Payment Details</div>
+          <div className="grid-form2" style={{ fontSize: 13, color: '#374151' }}>
+            {settings.bankName && <div>Bank: <span style={{ fontWeight: 600, color: '#1f2937' }}>{settings.bankName}</span></div>}
+            {settings.accountName && <div>Account Name: <span style={{ fontWeight: 600, color: '#1f2937' }}>{settings.accountName}</span></div>}
+            {settings.accountNumber && <div>Account Number: <span style={{ fontWeight: 600, color: '#1f2937' }}>{settings.accountNumber}</span></div>}
+            {settings.branchName && <div>Branch: <span style={{ fontWeight: 600, color: '#1f2937' }}>{settings.branchName}</span></div>}
+            {settings.routingNumber && <div>Routing Number: <span style={{ fontWeight: 600, color: '#1f2937' }}>{settings.routingNumber}</span></div>}
+          </div>
+          {settings.paymentInstructions && <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>{settings.paymentInstructions}</div>}
+        </div>
+      )}
+
+      {invoice.notes && (
+        <div style={{ marginTop: 16 }}>
+          <div className="inv-label">Notes</div>
+          <div style={{ fontSize: 13, color: '#374151' }}>{invoice.notes}</div>
+        </div>
+      )}
+
+      <div className="inv-footer">
+        <div>
+          <div style={{ fontWeight: 700, color: '#1f2937' }}>Thank You For Your Order</div>
+          <div style={{ fontSize: 11.5, color: '#9ca3af', marginTop: 4 }}>{settings.businessName} — {settings.tagline}</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          {settings.signature ? <img src={settings.signature} className="inv-sig" /> : <div style={{ height: 48 }} />}
+          <div style={{ fontSize: 11.5, color: '#9ca3af', borderTop: '1px solid #d1d5db', paddingTop: 4, paddingLeft: 16, paddingRight: 16 }}>{settings.owner}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- Invoice Detail ---------------------------------- */
+
+function InvoiceDetailPage({ invoice, settings, onBack, onEdit, onDuplicate, onDelete, addToast }) {
+  const [confirm, setConfirm] = useState(null);
+  const handlePrint = () => window.print();
+  const handleShare = async () => {
+    const text = `Invoice ${invoice.invoiceNumber}\n${settings.businessName}\nCustomer: ${invoice.customerSnapshot.name}\nTotal: ${formatBDT(invoice.grandTotal)}\nDue: ${formatBDT(invoice.dueAmount)}\nStatus: ${invoice.status}`;
+    try {
+      if (navigator.share) await navigator.share({ title: `Invoice ${invoice.invoiceNumber}`, text });
+      else if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); addToast('Invoice summary copied to clipboard'); }
+      else addToast('Sharing is not supported on this device', 'error');
+    } catch (e) { addToast('Could not share invoice', 'error'); }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button className="icon-btn" onClick={onBack}><Icon name="arrowLeft" size={18} /></button>
+          <h1 className="page-title" style={{ margin: 0, fontSize: 18 }}>{invoice.invoiceNumber}</h1>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Btn variant="secondary" onClick={() => onEdit(invoice.id)}><Icon name="edit" size={15} /> Edit</Btn>
+          <Btn variant="secondary" onClick={() => onDuplicate(invoice.id)}><Icon name="copy" size={15} /> Duplicate</Btn>
+          <Btn variant="secondary" onClick={handleShare}><Icon name="share" size={15} /> Share</Btn>
+          <Btn variant="secondary" onClick={handlePrint}><Icon name="printer" size={15} /> Print</Btn>
+          <Btn variant="primary" onClick={handlePrint}><Icon name="download" size={15} /> Download PDF</Btn>
+          <Btn variant="danger" onClick={() => setConfirm({ message: `Delete invoice ${invoice.invoiceNumber}? This cannot be undone.`, onConfirm: () => onDelete(invoice.id) })}><Icon name="trash" size={15} /></Btn>
+        </div>
+      </div>
+      <InvoicePreview invoice={invoice} settings={settings} />
+      <ConfirmModal data={confirm} onClose={() => setConfirm(null)} />
+    </div>
+  );
+}
+
+/* ---------------------------------- Invoices List ---------------------------------- */
+
+function InvoicesListPage({ invoices, customers, onView, onEdit, onDuplicate, onDelete, onNew }) {
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [customerFilter, setCustomerFilter] = useState('All');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [confirm, setConfirm] = useState(null);
+
+  const filtered = invoices
+    .filter(inv => inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) || (inv.customerSnapshot.name || '').toLowerCase().includes(search.toLowerCase()))
+    .filter(inv => statusFilter === 'All' || inv.status === statusFilter)
+    .filter(inv => customerFilter === 'All' || inv.customerId === customerFilter)
+    .filter(inv => !dateFrom || inv.date >= dateFrom)
+    .filter(inv => !dateTo || inv.date <= dateTo)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <h1 className="page-title">Invoices</h1>
+        <Btn variant="primary" onClick={onNew}><Icon name="plus" size={16} /> New Invoice</Btn>
+      </div>
+
+      <Card className="card-pad" style={{ padding: 14 }}>
+        <div className="filters-bar">
+          <div className="search-wrap">
+            <span className="search-icon"><Icon name="search" size={15} /></span>
+            <Input placeholder="Search invoice or customer..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+            <option value="All">All Statuses</option>
+            {STATUS_LIST.map(s => <option key={s} value={s}>{s}</option>)}
+          </Select>
+          <Select value={customerFilter} onChange={e => setCustomerFilter(e.target.value)}>
+            <option value="All">All Customers</option>
+            {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </Select>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+          </div>
+        </div>
+      </Card>
+
+      {filtered.length === 0
+        ? <EmptyState icon="invoice" title="No invoices found" subtitle="Create your first invoice to get started" />
+        : <Card style={{ overflow: 'hidden' }}>
+            <div className="table-wrap">
+              <table>
+                <thead><tr>{['Invoice #', 'Customer', 'Date', 'Total', 'Due', 'Status', ''].map(h => <th key={h}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {filtered.map(inv => (
+                    <tr key={inv.id}>
+                      <td style={{ fontWeight: 600, cursor: 'pointer' }} onClick={() => onView(inv.id)}>{inv.invoiceNumber}</td>
+                      <td>{inv.customerSnapshot.name || '—'}</td>
+                      <td style={{ color: 'var(--text-dim)' }}>{formatDateDisplay(inv.date)}</td>
+                      <td style={{ fontWeight: 700 }}>{formatBDT(inv.grandTotal)}</td>
+                      <td style={{ fontWeight: 600, color: 'var(--rose)' }}>{formatBDT(inv.dueAmount)}</td>
+                      <td><Badge status={inv.status} /></td>
+                      <td>
+                        <div className="row-actions">
+                          <button className="icon-btn" onClick={() => onEdit(inv.id)}><Icon name="edit" size={14} /></button>
+                          <button className="icon-btn" onClick={() => onDuplicate(inv.id)}><Icon name="copy" size={14} /></button>
+                          <button className="icon-btn" style={{ color: 'var(--rose)' }} onClick={() => setConfirm({ message: `Delete invoice ${inv.invoiceNumber}?`, onConfirm: () => onDelete(inv.id) })}><Icon name="trash" size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>}
+      <ConfirmModal data={confirm} onClose={() => setConfirm(null)} />
+    </div>
+  );
+}
+
+/* ---------------------------------- App (root) ---------------------------------- */
+
+function App() {
+  const [loaded, setLoaded] = useState(false);
+  const [dark, setDark] = useState(false);
+  const [view, setView] = useState('dashboard');
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [customers, setCustomers] = useState([]);
+  const [products, setProducts] = useState(DEFAULT_PRODUCTS);
+  const [invoices, setInvoices] = useState([]);
+
+  const [editingId, setEditingId] = useState(null);
+  const [duplicateFrom, setDuplicateFrom] = useState(null);
+  const [viewingId, setViewingId] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const addToast = (message, type = 'success') => {
+    const id = uid('t');
+    setToasts(t => [...t, { id, message, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [s, c, p, i, th] = await Promise.all([
+          storageAdapter.get(STORAGE_KEYS.settings),
+          storageAdapter.get(STORAGE_KEYS.customers),
+          storageAdapter.get(STORAGE_KEYS.products),
+          storageAdapter.get(STORAGE_KEYS.invoices),
+          storageAdapter.get(STORAGE_KEYS.theme)
+        ]);
+        if (s) setSettings(mergeSettings(JSON.parse(s.value)));
+        if (c) setCustomers(JSON.parse(c.value));
+        if (p) setProducts(JSON.parse(p.value));
+        if (i) setInvoices(JSON.parse(i.value));
+        if (th) setDark(th.value === 'dark');
+      } catch (e) { console.error('Load error', e); }
+      setLoaded(true);
+    })();
+  }, []);
+
+  useEffect(() => { if (loaded) storageAdapter.set(STORAGE_KEYS.settings, JSON.stringify(settings)); }, [settings, loaded]);
+  useEffect(() => { if (loaded) storageAdapter.set(STORAGE_KEYS.customers, JSON.stringify(customers)); }, [customers, loaded]);
+  useEffect(() => { if (loaded) storageAdapter.set(STORAGE_KEYS.products, JSON.stringify(products)); }, [products, loaded]);
+  useEffect(() => { if (loaded) storageAdapter.set(STORAGE_KEYS.invoices, JSON.stringify(invoices)); }, [invoices, loaded]);
+  useEffect(() => { if (loaded) storageAdapter.set(STORAGE_KEYS.theme, dark ? 'dark' : 'light'); }, [dark, loaded]);
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark); }, [dark]);
+
+  const addCustomer = (data) => { const c = { id: uid('cust'), ...data }; setCustomers(cs => [...cs, c]); addToast('Customer added'); return c; };
+  const updateCustomer = (data) => { setCustomers(cs => cs.map(c => c.id === data.id ? data : c)); addToast('Customer updated'); };
+  const deleteCustomer = (id) => { setCustomers(cs => cs.filter(c => c.id !== id)); addToast('Customer deleted'); };
+
+  const addProduct = (data) => { setProducts(ps => [...ps, { id: uid('prod'), ...data }]); addToast('Product added'); };
+  const updateProduct = (data) => { setProducts(ps => ps.map(p => p.id === data.id ? data : p)); addToast('Product updated'); };
+  const deleteProduct = (id) => { setProducts(ps => ps.filter(p => p.id !== id)); addToast('Product deleted'); };
+
+  const goNewInvoice = () => { setEditingId(null); setDuplicateFrom(null); setView('form'); };
+  const goEditInvoice = (id) => { setEditingId(id); setDuplicateFrom(null); setView('form'); };
+  const goViewInvoice = (id) => { setViewingId(id); setView('detail'); };
+
+  const saveInvoice = (data) => {
+    if (data.id) {
+      setInvoices(invs => invs.map(i => i.id === data.id ? data : i));
+      addToast('Invoice updated'); setViewingId(data.id);
+    } else {
+      const newInv = { ...data, id: uid('inv'), createdAt: new Date().toISOString() };
+      setInvoices(invs => [...invs, newInv]);
+      addToast('Invoice created'); setViewingId(newInv.id);
+    }
+    setView('detail');
+  };
+  const deleteInvoice = (id) => {
+    setInvoices(invs => invs.filter(i => i.id !== id));
+    addToast('Invoice deleted');
+    if (viewingId === id) setView('invoices');
+  };
+  const duplicateInvoice = (id) => {
+    const src = invoices.find(i => i.id === id);
+    if (!src) return;
+    const dup = { ...src, id: null, invoiceNumber: generateInvoiceNumber(invoices), date: todayISO(), status: 'Draft', advancePaid: 0, items: src.items.map(it => ({ ...it, id: uid('it') })) };
+    setEditingId(null); setDuplicateFrom(dup); setView('form');
+  };
+  const quickAddCustomerFromForm = (data) => addCustomer(data);
+
+  const currentInvoiceForForm = editingId ? invoices.find(i => i.id === editingId) : duplicateFrom;
+  const viewingInvoice = invoices.find(i => i.id === viewingId);
+
+  if (!loaded) return <div className="loading-screen">Loading...</div>;
+
+  return (
+    <div className="app">
+      <Sidebar
+        view={view} setView={(v) => { setView(v); setMobileOpen(false); }}
+        onNewInvoice={goNewInvoice} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}
+        toggleDark={() => setDark(d => !d)} dark={dark}
+      />
+      <main className="content">
+        {view === 'dashboard' && <Dashboard invoices={invoices} />}
+        {view === 'invoices' && (
+          <InvoicesListPage invoices={invoices} customers={customers} onView={goViewInvoice} onEdit={goEditInvoice} onDuplicate={duplicateInvoice} onDelete={deleteInvoice} onNew={goNewInvoice} />
+        )}
+        {view === 'customers' && <CustomersPage customers={customers} onAdd={addCustomer} onUpdate={updateCustomer} onDelete={deleteCustomer} />}
+        {view === 'products' && <ProductsPage products={products} onAdd={addProduct} onUpdate={updateProduct} onDelete={deleteProduct} />}
+        {view === 'settings' && <SettingsPage settings={settings} onSave={setSettings} addToast={addToast} />}
+        {view === 'form' && (
+          <InvoiceForm key={editingId || (duplicateFrom ? 'dup' : 'new')} invoices={invoices} customers={customers} products={products} settings={settings}
+            initial={currentInvoiceForForm} onSave={saveInvoice} onCancel={() => setView(editingId ? 'detail' : 'invoices')} onQuickAddCustomer={quickAddCustomerFromForm} />
+        )}
+        {view === 'detail' && viewingInvoice && (
+          <InvoiceDetailPage invoice={viewingInvoice} settings={settings} onBack={() => setView('invoices')} onEdit={goEditInvoice} onDuplicate={duplicateInvoice} onDelete={deleteInvoice} addToast={addToast} />
+        )}
+      </main>
+      <ToastStack toasts={toasts} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
